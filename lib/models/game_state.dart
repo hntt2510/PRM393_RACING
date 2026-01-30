@@ -26,7 +26,9 @@ class GameState {
 
   double get payout {
     if (!hasWon || winnerId == null) return 0.0;
-    return bets[winnerId]! * 2.0; // 2x payout
+    // Payout = tiền cược con thắng * 2 (đã bao gồm tiền thưởng, KHÔNG bao gồm tiền cược gốc)
+    // Ví dụ: cược 100 → thắng được 200 (tiền cược 100 đã bị trừ rồi, chỉ cộng 200 vào)
+    return bets[winnerId]! * 2.0;
   }
 
   void resetBets() {
@@ -37,17 +39,16 @@ class GameState {
   void addWin() {
     totalWins++;
     totalBets += totalBetAmount;
-    if (winnerId != null && bets.containsKey(winnerId)) {
-      // Subtract bet amount first, then add payout (net gain = bet amount)
-      balance -= bets[winnerId]!;
-      balance += payout;
-    }
+    // Tiền cược đã được trừ khi bắt đầu race (trong betting_screen)
+    // Giờ chỉ cộng tiền thưởng vào (KHÔNG hoàn lại tiền cược)
+    // Ví dụ: cược 100 → đã trừ 100 → thắng cộng 200 → tổng lời: +100
+    balance += payout;
   }
 
   void addLoss() {
     totalLosses++;
     totalBets += totalBetAmount;
-    balance -= totalBetAmount;
+    // Tiền cược đã được trừ khi bắt đầu race, không cần làm gì thêm
   }
 
   GameState copyWith({

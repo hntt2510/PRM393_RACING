@@ -32,9 +32,10 @@ class _ResultScreenState extends State<ResultScreen> {
     // Find winner horse
     final winnerId = widget.gameState.winnerId ?? 1;
     final horses = [
-      Horse(id: 1, name: 'Horse 1', color: Colors.brown),
-      Horse(id: 2, name: 'Horse 2', color: Colors.white),
-      Horse(id: 3, name: 'Horse 3', color: Colors.black),
+      Horse(id: 1, name: 'Thunder', color: Colors.brown),
+      Horse(id: 2, name: 'Lightning', color: const Color(0xFF42A5F5)), // Blue 400
+      Horse(id: 3, name: 'Shadow', color: const Color(0xFF424242)), // Grey 800
+      Horse(id: 4, name: 'Blaze', color: const Color(0xFFFB8C00)), // Orange 600
     ];
     _winnerHorse = horses.firstWhere((h) => h.id == winnerId);
 
@@ -143,6 +144,7 @@ class _ResultScreenState extends State<ResultScreen> {
                       HorseWidget(
                         horse: _winnerHorse,
                         isWinner: true,
+                        isRacing: false,
                         size: 120,
                       ),
                     ],
