@@ -33,7 +33,7 @@ class HorseWidget extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.3),
+                color: Colors.black.withValues(alpha: 0.3),
                 blurRadius: 4,
                 offset: const Offset(2, 2),
               ),
@@ -47,7 +47,7 @@ class HorseWidget extends StatelessWidget {
                 width: horseSize * 0.4,
                 height: horseSize * 0.3,
                 decoration: BoxDecoration(
-                  color: horse.color.withOpacity(0.8),
+                  color: horse.color.withValues(alpha: 0.8),
                   borderRadius: BorderRadius.circular(horseSize * 0.15),
                 ),
               ),
@@ -61,7 +61,7 @@ class HorseWidget extends StatelessWidget {
                   color: Colors.white,
                   shadows: [
                     Shadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       blurRadius: 2,
                     ),
                   ],
@@ -82,7 +82,7 @@ class HorseWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.green.withOpacity(0.5),
+                    color: Colors.green.withValues(alpha: 0.5),
                     blurRadius: 8,
                     spreadRadius: 2,
                   ),

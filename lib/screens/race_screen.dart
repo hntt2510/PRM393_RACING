@@ -201,7 +201,7 @@ class _RaceScreenState extends State<RaceScreen>
                                   bottom: 0,
                                   child: Container(
                                     width: 2,
-                                    color: Colors.brown.shade400.withOpacity(0.5),
+                                    color: Colors.brown.shade400.withValues(alpha: 0.5),
                                   ),
                                 );
                               }),

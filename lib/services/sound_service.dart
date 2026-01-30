@@ -1,4 +1,5 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/foundation.dart';
 
 class SoundService {
   static final SoundService _instance = SoundService._internal();
@@ -17,7 +18,7 @@ class SoundService {
       _currentSound = 'betting';
     } catch (e) {
       // Sound file not found, continue silently
-      print('Betting sound not found: $e');
+      debugPrint('Betting sound not found: $e');
     }
   }
 
@@ -28,7 +29,7 @@ class SoundService {
       await _backgroundPlayer.play(AssetSource('sounds/race.mp3'));
       _currentSound = 'race';
     } catch (e) {
-      print('Race sound not found: $e');
+      debugPrint('Race sound not found: $e');
       // Fallback: Generate a simple tone for race sound
       _playFallbackRaceSound();
     }
@@ -38,7 +39,7 @@ class SoundService {
   void _playFallbackRaceSound() {
     // This is a placeholder - in a real app you'd use a proper sound generator
     // For now, we'll just log that sound is playing
-    print('Playing fallback race sound (galloping pattern)');
+    debugPrint('Playing fallback race sound (galloping pattern)');
   }
 
   Future<void> playWinSound() async {
@@ -47,7 +48,7 @@ class SoundService {
       await _player.play(AssetSource('sounds/win.mp3'));
       _currentSound = 'win';
     } catch (e) {
-      print('Win sound not found: $e');
+      debugPrint('Win sound not found: $e');
     }
   }
 
@@ -57,7 +58,7 @@ class SoundService {
       await _player.play(AssetSource('sounds/lose.mp3'));
       _currentSound = 'lose';
     } catch (e) {
-      print('Lose sound not found: $e');
+      debugPrint('Lose sound not found: $e');
     }
   }
 
@@ -67,7 +68,7 @@ class SoundService {
       await _player.play(AssetSource('sounds/summary.mp3'));
       _currentSound = 'summary';
     } catch (e) {
-      print('Summary sound not found: $e');
+      debugPrint('Summary sound not found: $e');
     }
   }
 

@@ -214,7 +214,7 @@ class _BettingScreenState extends State<BettingScreen> {
                   ),
                 ),
                 Card(
-                  color: Colors.white.withOpacity(0.9),
+                  color: Colors.white.withValues(alpha: 0.9),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -230,7 +230,7 @@ class _BettingScreenState extends State<BettingScreen> {
                               ),
                             ),
                             Text(
-                              '${totalBet.toStringAsFixed(0)}',
+                              totalBet.toStringAsFixed(0),
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
@@ -251,7 +251,7 @@ class _BettingScreenState extends State<BettingScreen> {
                               ),
                             ),
                             Text(
-                              '${remainingBalance.toStringAsFixed(0)}',
+                              remainingBalance.toStringAsFixed(0),
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,

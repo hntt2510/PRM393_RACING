@@ -149,7 +149,7 @@ class _ResultScreenState extends State<ResultScreen> {
                   ),
                   const SizedBox(height: 40),
                   Card(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     child: Padding(
                       padding: const EdgeInsets.all(20.0),
                       child: Column(
@@ -175,8 +175,8 @@ class _ResultScreenState extends State<ResultScreen> {
                               ),
                               Text(
                                 _hasWon
-                                    ? '${widget.gameState.bets[_winnerHorse.id]?.toStringAsFixed(0) ?? '0'}'
-                                    : '${widget.gameState.totalBetAmount.toStringAsFixed(0)}',
+                                    ? widget.gameState.bets[_winnerHorse.id]?.toStringAsFixed(0) ?? '0'
+                                    : widget.gameState.totalBetAmount.toStringAsFixed(0),
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -196,7 +196,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                 ),
                               ),
                               Text(
-                                '${widget.gameState.payout.toStringAsFixed(0)}',
+                                widget.gameState.payout.toStringAsFixed(0),
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
