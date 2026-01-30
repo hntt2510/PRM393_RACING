@@ -219,7 +219,23 @@ class _RaceScreenState extends State<RaceScreen>
                           child: Stack(
                             clipBehavior: Clip.none,
                             children: [
+<<<<<<< HEAD
                               // Grass texture effect trên và dưới
+=======
+                              // Track lines để tạo hiệu ứng chuyển động
+                              ...List.generate(10, (lineIndex) {
+                                return Positioned(
+                                  left: (screenWidth / 10) * lineIndex,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    width: 2,
+                                    color: Colors.brown.shade400.withValues(alpha: 0.5),
+                                  ),
+                                );
+                              }),
+                              // Finish line
+>>>>>>> 219f1b72f0a1ef75edabce4282e7a7d65c87f9aa
                               Positioned(
                                 top: 0,
                                 left: 0,
