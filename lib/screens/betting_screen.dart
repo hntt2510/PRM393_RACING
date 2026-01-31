@@ -434,7 +434,6 @@ class _BettingScreenState extends State<BettingScreen> {
                     },
                   ),
                 ),
-<<<<<<< HEAD
                 Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -459,10 +458,6 @@ class _BettingScreenState extends State<BettingScreen> {
                       width: 2,
                     ),
                   ),
-=======
-                Card(
-                  color: Colors.white.withValues(alpha: 0.9),
->>>>>>> 219f1b72f0a1ef75edabce4282e7a7d65c87f9aa
                   child: Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
@@ -487,7 +482,6 @@ class _BettingScreenState extends State<BettingScreen> {
                                 ),
                               ],
                             ),
-<<<<<<< HEAD
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
@@ -502,14 +496,6 @@ class _BettingScreenState extends State<BettingScreen> {
                                   fontWeight: FontWeight.bold,
                                   color: Colors.blue.shade900,
                                 ),
-=======
-                            Text(
-                              totalBet.toStringAsFixed(0),
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
->>>>>>> 219f1b72f0a1ef75edabce4282e7a7d65c87f9aa
                               ),
                             ),
                           ],
@@ -539,18 +525,10 @@ class _BettingScreenState extends State<BettingScreen> {
                                 ),
                               ],
                             ),
-<<<<<<< HEAD
                             Container(
                               padding: const EdgeInsets.symmetric(
                                   horizontal: 16, vertical: 8),
                               decoration: BoxDecoration(
-=======
-                            Text(
-                              remainingBalance.toStringAsFixed(0),
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
->>>>>>> 219f1b72f0a1ef75edabce4282e7a7d65c87f9aa
                                 color: remainingBalance >= 0
                                     ? Colors.green.shade100
                                     : Colors.red.shade100,

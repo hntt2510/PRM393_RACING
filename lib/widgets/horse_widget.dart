@@ -55,7 +55,6 @@ class HorseWidget extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-<<<<<<< HEAD
                 color: horse.color.withOpacity(0.3),
                 blurRadius: isWinner ? 15 : 8,
                 spreadRadius: isWinner ? 4 : 2,
@@ -84,24 +83,6 @@ class HorseWidget extends StatelessWidget {
                   repeat: isRacing || isWinner,
                   animate: true,
                   frameRate: FrameRate.max,
-=======
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 4,
-                offset: const Offset(2, 2),
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Horse head
-              Container(
-                width: horseSize * 0.4,
-                height: horseSize * 0.3,
-                decoration: BoxDecoration(
-                  color: horse.color.withValues(alpha: 0.8),
-                  borderRadius: BorderRadius.circular(horseSize * 0.15),
->>>>>>> 219f1b72f0a1ef75edabce4282e7a7d65c87f9aa
                 ),
               ),
             ),
@@ -145,14 +126,9 @@ class HorseWidget extends StatelessWidget {
                   letterSpacing: 0.8,
                   shadows: [
                     Shadow(
-<<<<<<< HEAD
                       color: Colors.black.withOpacity(0.7),
                       blurRadius: 4,
                       offset: const Offset(1, 1),
-=======
-                      color: Colors.black.withValues(alpha: 0.5),
-                      blurRadius: 2,
->>>>>>> 219f1b72f0a1ef75edabce4282e7a7d65c87f9aa
                     ),
                   ],
                 ),
@@ -162,7 +138,6 @@ class HorseWidget extends StatelessWidget {
         // Winner decoration với animation effect đẹp hơn - đặt phía trên, không đè ngựa
         if (isWinner)
           Positioned(
-<<<<<<< HEAD
             top: -horseSize * 0.5, // Đặt cao hơn để không đè lên ngựa
             left: 0,
             right: 0,
@@ -184,19 +159,6 @@ class HorseWidget extends StatelessWidget {
                       Colors.orange.shade600,
                       Colors.red.shade500,
                     ],
-=======
-            top: -horseSize * 0.2,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.green,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.green.withValues(alpha: 0.5),
-                    blurRadius: 8,
-                    spreadRadius: 2,
->>>>>>> 219f1b72f0a1ef75edabce4282e7a7d65c87f9aa
                   ),
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
