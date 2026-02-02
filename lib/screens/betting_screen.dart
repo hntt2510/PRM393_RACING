@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../models/game_state.dart';
 import '../models/horse.dart';
 import '../services/sound_service.dart';
@@ -57,54 +58,53 @@ class _BettingScreenState extends State<BettingScreen> {
   }
 
   void _startRace() {
-    final totalBet = _getTotalBet();
-    if (totalBet > _gameState.balance) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Tổng tiền cược vượt quá số dư!'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (totalBet == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Vui lòng đặt cược ít nhất một con ngựa!'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-      return;
-    }
-
-    // Update bets và trừ tiền cược ngay lập tức
-    final newBets = <int, double>{};
-    for (int i = 0; i < _betControllers.length; i++) {
-      final bet = double.tryParse(_betControllers[i].text) ?? 0.0;
-      if (bet > 0) {
-        newBets[_horses[i].id] = bet;
-      }
-    }
-
-    // QUAN TRỌNG: Trừ tiền cược khỏi balance ngay khi bắt đầu race
-    // Tiền này sẽ KHÔNG được hoàn lại, dù thắng hay thua
-    // Nếu thắng, chỉ cộng thêm tiền thưởng (payout) vào
-    final newBalance = _gameState.balance - totalBet;
-    final updatedState = _gameState.copyWith(
-      bets: newBets,
-      balance: newBalance,
-    );
-    _soundService.stop();
-
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            RaceScreen(gameState: updatedState, horses: _horses),
+  final totalBet = _getTotalBet();
+  if (totalBet > _gameState.balance) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Tổng tiền cược vượt quá số dư!'),
+        backgroundColor: Colors.red,
       ),
     );
+    return;
   }
+
+  if (totalBet == 0) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Vui lòng đặt cược ít nhất một con ngựa!'),
+        backgroundColor: Colors.orange,
+      ),
+    );
+    return;
+  }
+
+  // Update bets và trừ tiền cược
+  final newBets = <int, double>{};
+  for (int i = 0; i < _betControllers.length; i++) {
+    final bet = double.tryParse(_betControllers[i].text) ?? 0.0;
+    if (bet > 0) {
+      newBets[_horses[i].id] = bet;
+    }
+  }
+
+  final newBalance = _gameState.balance - totalBet;
+  final updatedState = _gameState.copyWith(
+    bets: newBets,
+    balance: newBalance,
+  );
+  
+  // ✅ Dừng nhạc betting trước khi chuyển màn hình
+  _soundService.stop();
+
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(
+      builder: (context) =>
+          RaceScreen(gameState: updatedState, horses: _horses),
+    ),
+  );
+}
 
   @override
   Widget build(BuildContext context) {
@@ -122,52 +122,54 @@ class _BettingScreenState extends State<BettingScreen> {
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Row(
+            child: Stack(
               children: [
-                // LEFT SIDE: Horses List
-                Expanded(
-                  flex: 3,
-                  child: Column(
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
+                Row(
+                  children: [
+                    // LEFT SIDE: Horses List
+                    Expanded(
+                      flex: 3,
+                      child: Column(
                         children: [
-                          Icon(
-                            Icons.emoji_events,
-                            color: Colors.amber.shade300,
-                            size: 32,
-                          ),
-                          const SizedBox(width: 12),
-                          const Text(
-                            'Place Your Bets!',
-                            style: TextStyle(
-                              fontSize: 28,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              shadows: [
-                                Shadow(
-                                  blurRadius: 10.0,
-                                  color: Colors.black,
-                                  offset: Offset(2.0, 2.0),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.emoji_events,
+                                color: Colors.amber.shade300,
+                                size: 32,
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'Place Your Bets!',
+                                style: TextStyle(
+                                  fontSize: 28,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                  shadows: [
+                                    Shadow(
+                                      blurRadius: 10.0,
+                                      color: Colors.black,
+                                      offset: Offset(2.0, 2.0),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 12),
+                              Icon(
+                                Icons.emoji_events,
+                                color: Colors.amber.shade300,
+                                size: 32,
+                              ),
+                            ],
                           ),
-                          const SizedBox(width: 12),
-                          Icon(
-                            Icons.emoji_events,
-                            color: Colors.amber.shade300,
-                            size: 32,
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: _horses.length,
-                          itemBuilder: (context, index) {
-                            final horse = _horses[index];
-                            final hasBet =
+                          const SizedBox(height: 10),
+                          Expanded(
+                            child: ListView.builder(
+                              itemCount: _horses.length,
+                              itemBuilder: (context, index) {
+                                final horse = _horses[index];
+                                final hasBet =
                                 (double.tryParse(_betControllers[index].text) ??
                                     0.0) >
                                 0;
@@ -365,6 +367,12 @@ class _BettingScreenState extends State<BettingScreen> {
                                                   _betControllers[index],
                                               keyboardType:
                                                   TextInputType.number,
+                                              inputFormatters: [
+                                                FilteringTextInputFormatter
+                                                    .allow(
+                                                  RegExp(r'[0-9.]'),
+                                                ),
+                                              ],
                                               style: TextStyle(
                                                 fontSize: 18,
                                                 fontWeight: FontWeight.bold,
@@ -579,6 +587,32 @@ class _BettingScreenState extends State<BettingScreen> {
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ],
+            ),
+                // SOUND BUTTON - TOP RIGHT CORNER
+                Positioned(
+                  top: 0,
+                  right: 16,
+                  child: IconButton(
+                    icon: Icon(
+                      _soundService.isSoundEnabled
+                          ? Icons.volume_up
+                          : Icons.volume_off,
+                      color: Colors.amber.shade300,
+                      size: 32,
+                    ),
+                    onPressed: () async {
+                      setState(() {});
+                      await _soundService.setSoundEnabled(
+                        !_soundService.isSoundEnabled,
+                      );
+                      setState(() {});
+                    },
+                    tooltip: _soundService.isSoundEnabled
+                        ? 'Mute Sound'
+                        : 'Unmute Sound',
                   ),
                 ),
               ],
