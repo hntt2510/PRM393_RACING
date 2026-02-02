@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
@@ -10,30 +11,27 @@ class RaceScreen extends StatefulWidget {
   final GameState gameState;
   final List<Horse> horses;
 
-  const RaceScreen({
-    super.key,
-    required this.gameState,
-    required this.horses,
-  });
+  const RaceScreen({super.key, required this.gameState, required this.horses});
 
   @override
   State<RaceScreen> createState() => _RaceScreenState();
 }
 
-class _RaceScreenState extends State<RaceScreen>
-    with TickerProviderStateMixin {
+class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
   final SoundService _soundService = SoundService();
   late List<AnimationController> _controllers;
   late List<Animation<double>> _animations;
   late List<Horse> _racingHorses;
   int? _winnerId;
   bool _raceFinished = false;
+  int _countdown = 3;
+  Timer? _countdownTimer;
 
   @override
   void initState() {
     super.initState();
     _racingHorses = widget.horses.map((h) => h.copyWith()).toList();
-    
+
     // Initialize random speeds for each horse
     final random = Random();
     for (var horse in _racingHorses) {
@@ -41,35 +39,50 @@ class _RaceScreenState extends State<RaceScreen>
     }
 
     // Create animation controllers with speed-based duration
-    _controllers = List.generate(
-      _racingHorses.length,
-      (index) {
-        // Base duration divided by speed (faster horse = shorter duration)
-        final baseDuration = 4000; // 4 seconds base
-        final duration = (baseDuration / _racingHorses[index].speed).round();
-        return AnimationController(
-          vsync: this,
-          duration: Duration(milliseconds: duration),
-        );
-      },
-    );
+    _controllers = List.generate(_racingHorses.length, (index) {
+      // Base duration divided by speed (faster horse = shorter duration)
+      final baseDuration = 4000; // 4 seconds base
+      final duration = (baseDuration / _racingHorses[index].speed).round();
+      return AnimationController(
+        vsync: this,
+        duration: Duration(milliseconds: duration),
+      );
+    });
 
     // Create animations with smooth curves for natural movement
     _animations = _controllers.map((controller) {
       return Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
           parent: controller,
-          curve: Curves.easeOutCubic, // Smooth acceleration curve cho chuyển động tự nhiên
+          curve: Curves.easeOutCubic, // Smooth acceleration
         ),
       );
     }).toList();
 
-    // Start race
-    _startRace();
-    _soundService.playRaceSound();
+    // Start Countdown
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_countdown > 1) {
+            _countdown--;
+            // Optional: Play countdown beep
+          } else {
+            _countdown = 0;
+            timer.cancel();
+            _startRace();
+          }
+        });
+      }
+    });
   }
 
   void _startRace() {
+    _soundService.playRaceSound();
+
     // Start all animations with slight delay variations
     final random = Random();
     for (int i = 0; i < _controllers.length; i++) {
@@ -90,20 +103,17 @@ class _RaceScreenState extends State<RaceScreen>
       });
 
       // Start with slight delay
-      Future.delayed(
-        Duration(milliseconds: random.nextInt(200)),
-        () {
-          if (mounted) {
-            _controllers[i].forward();
-          }
-        },
-      );
+      Future.delayed(Duration(milliseconds: random.nextInt(200)), () {
+        if (mounted) {
+          _controllers[i].forward();
+        }
+      });
     }
   }
 
   void _finishRace() {
     _soundService.stop();
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         final updatedState = widget.gameState.copyWith(winnerId: _winnerId);
         if (updatedState.hasWon) {
@@ -124,6 +134,7 @@ class _RaceScreenState extends State<RaceScreen>
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -135,243 +146,222 @@ class _RaceScreenState extends State<RaceScreen>
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Colors.blue.shade300,
-              Colors.green.shade200,
-            ],
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/background.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: SafeArea(
-          child: Column(
+          child: Stack(
             children: [
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text(
-                  'GO!',
-                  style: TextStyle(
-                    fontSize: 48,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    shadows: [
-                      Shadow(
-                        blurRadius: 10.0,
-                        color: Colors.black,
-                        offset: Offset(2.0, 2.0),
-                      ),
+              // Tracks occupying full space
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  final laneHeight =
+                      constraints.maxHeight / (_racingHorses.length + 0.5);
+                  final screenWidth = constraints.maxWidth;
+
+                  return Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      ...List.generate(_racingHorses.length, (index) {
+                        final horse = _racingHorses[index];
+                        final topPosition = laneHeight * (index + 0.25);
+
+                        return Positioned(
+                          top: topPosition,
+                          left: 0,
+                          right: 0,
+                          height: laneHeight,
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            decoration: BoxDecoration(
+                              // Semi-transparent dark track for better contrast with background image
+                              color: Colors.black.withOpacity(0.4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                                width: 1,
+                              ),
+                            ),
+                            child: Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                // Track texture/lines - simpler white dashed lines
+                                ...List.generate(20, (lineIndex) {
+                                  return Positioned(
+                                    left: (screenWidth / 20) * lineIndex,
+                                    top: 10,
+                                    bottom: 10,
+                                    child: Container(
+                                      width: 2,
+                                      decoration: BoxDecoration(
+                                        color: Colors.white.withOpacity(0.15),
+                                      ),
+                                    ),
+                                  );
+                                }),
+
+                                // Enhanced Checkered Finish line
+                                Positioned(
+                                  right: 50,
+                                  top: 0,
+                                  bottom: 0,
+                                  child: Container(
+                                    width: 40,
+                                    decoration: BoxDecoration(
+                                      border: Border.symmetric(
+                                        horizontal: BorderSide(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
+                                      ),
+                                    ),
+                                    child: CustomPaint(
+                                      painter: CheckeredPainter(),
+                                    ),
+                                  ),
+                                ),
+
+                                // Horse
+                                Positioned(
+                                  left:
+                                      (screenWidth - 160) *
+                                      horse.position.clamp(0.0, 1.0),
+                                  top: 0,
+                                  bottom: 0,
+                                  child: Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: HorseWidget(
+                                      horse: horse,
+                                      size: laneHeight * 0.9,
+                                      isRacing:
+                                          _countdown == 0 && !_raceFinished,
+                                      isWinner:
+                                          _raceFinished &&
+                                          _winnerId == horse.id,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
                     ],
+                  );
+                },
+              ),
+
+              // Countdown Overlay with improved animation
+              if (_countdown > 0)
+                Container(
+                  color: Colors.black87, // Darker overlay for focus
+                  child: Center(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      transitionBuilder:
+                          (Widget child, Animation<double> animation) {
+                            return ScaleTransition(
+                              scale: animation,
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                            );
+                          },
+                      child: Text(
+                        '$_countdown',
+                        key: ValueKey<int>(_countdown),
+                        style: const TextStyle(
+                          fontSize: 180,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          fontFamily: 'Roboto',
+                          shadows: [
+                            Shadow(
+                              blurRadius: 30,
+                              color: Colors.blueAccent,
+                              offset: Offset(0, 0),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              Expanded(
-                child: Stack(
-                  clipBehavior: Clip.none, // Cho phép overflow nhưng sẽ xử lý trong widget
-                  children: [
-                    // Track lanes
-                    ...List.generate(_racingHorses.length, (index) {
-                      final horse = _racingHorses[index];
-                      final screenWidth = MediaQuery.of(context).size.width;
-                      final laneHeight = MediaQuery.of(context).size.height /
-                          (_racingHorses.length + 1);
-                      final topPosition = laneHeight * (index + 0.5);
 
-                      return Positioned(
-                        top: topPosition - 60,
-                        left: 0,
-                        right: 0,
-                        child: Container(
-                          height: 120,
-                          decoration: BoxDecoration(
-                            gradient: LinearGradient(
-                              begin: Alignment.topCenter,
-                              end: Alignment.bottomCenter,
-                              colors: [
-                                Colors.brown.shade500,
-                                Colors.brown.shade400,
-                                Colors.brown.shade300,
-                                Colors.brown.shade400,
-                                Colors.brown.shade500,
-                              ],
-                              stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+              // "GO!" Overlay
+              if (_countdown == 0 &&
+                  !_raceFinished &&
+                  _racingHorses[0].position < 0.05)
+                Positioned.fill(
+                  child: Center(
+                    child: TweenAnimationBuilder(
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.elasticOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: value * 1.5,
+                          child: Opacity(
+                            opacity: value.clamp(0.0, 1.0),
+                            child: const Text(
+                              'GO!',
+                              style: TextStyle(
+                                fontSize: 120,
+                                fontWeight: FontWeight.bold,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.greenAccent,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 20,
+                                    color: Colors.black,
+                                    offset: Offset(5, 5),
+                                  ),
+                                ],
+                              ),
                             ),
-                            border: Border(
-                              top: BorderSide(
-                                color: Colors.brown.shade900,
-                                width: 4,
-                              ),
-                              bottom: BorderSide(
-                                color: Colors.brown.shade900,
-                                width: 4,
-                              ),
-                            ),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.3),
-                                blurRadius: 8,
-                                spreadRadius: 2,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
                           ),
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              // Grass texture effect trên và dưới
-                              Positioned(
-                                top: 0,
-                                left: 0,
-                                right: 0,
-                                height: 8,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.green.shade700.withOpacity(0.4),
-                                        Colors.green.shade500.withOpacity(0.3),
-                                        Colors.green.shade400.withOpacity(0.2),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 0,
-                                left: 0,
-                                right: 0,
-                                height: 8,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      colors: [
-                                        Colors.green.shade400.withOpacity(0.2),
-                                        Colors.green.shade500.withOpacity(0.3),
-                                        Colors.green.shade700.withOpacity(0.4),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              // Track lines để tạo hiệu ứng chuyển động với gradient đẹp hơn
-                              ...List.generate(20, (lineIndex) {
-                                return Positioned(
-                                  left: (screenWidth / 20) * lineIndex,
-                                  top: 8,
-                                  bottom: 8,
-                                  child: Container(
-                                    width: 4,
-                                    decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        colors: [
-                                          Colors.white.withOpacity(0.8),
-                                          Colors.white.withOpacity(0.4),
-                                          Colors.white.withOpacity(0.2),
-                                          Colors.white.withOpacity(0.4),
-                                          Colors.white.withOpacity(0.8),
-                                        ],
-                                        stops: const [0.0, 0.25, 0.5, 0.75, 1.0],
-                                      ),
-                                    ),
-                                  ),
-                                );
-                              }),
-                              // Finish line với design đẹp và không đè ngựa
-                              Positioned(
-                                right: 0,
-                                top: 8,
-                                bottom: 8,
-                                child: Container(
-                                  width: 80,
-                                  decoration: BoxDecoration(
-                                    gradient: LinearGradient(
-                                      begin: Alignment.topLeft,
-                                      end: Alignment.bottomRight,
-                                      colors: [
-                                        Colors.red.shade900,
-                                        Colors.red.shade700,
-                                        Colors.red.shade600,
-                                        Colors.red.shade700,
-                                        Colors.red.shade900,
-                                      ],
-                                    ),
-                                    border: Border.all(
-                                      color: Colors.white,
-                                      width: 5,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.red.withOpacity(0.6),
-                                        blurRadius: 15,
-                                        spreadRadius: 3,
-                                      ),
-                                    ],
-                                  ),
-                                  child: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(4),
-                                        decoration: BoxDecoration(
-                                          color: Colors.white.withOpacity(0.2),
-                                          shape: BoxShape.circle,
-                                        ),
-                                        child: const Icon(
-                                          Icons.flag,
-                                          color: Colors.white,
-                                          size: 32,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      const Text(
-                                        'FINISH',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                          letterSpacing: 3,
-                                          shadows: [
-                                            Shadow(
-                                              color: Colors.black,
-                                              blurRadius: 6,
-                                              offset: Offset(2, 2),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              // Horse với Lottie animation - đặt ở giữa track với khoảng cách đủ
-                              Positioned(
-                                left: (screenWidth - 120) * horse.position.clamp(0.0, 1.0),
-                                top: 10,
-                                child: Transform.translate(
-                                  offset: Offset(0, 0),
-                                  child: HorseWidget(
-                                    horse: horse,
-                                    size: 100,
-                                    isRacing: !_raceFinished,
-                                    isWinner: _raceFinished && _winnerId == horse.id,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                  ],
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
             ],
           ),
         ),
       ),
     );
   }
+}
+
+// Re-added CheckeredPainter
+class CheckeredPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint blackPaint = Paint()..color = Colors.black;
+    final Paint whitePaint = Paint()..color = Colors.white;
+    const double squareSize = 10.0;
+
+    for (double y = 0; y < size.height; y += squareSize) {
+      for (double x = 0; x < size.width; x += squareSize) {
+        if (((x / squareSize).floor() + (y / squareSize).floor()) % 2 == 0) {
+          canvas.drawRect(
+            Rect.fromLTWH(x, y, squareSize, squareSize),
+            blackPaint,
+          );
+        } else {
+          canvas.drawRect(
+            Rect.fromLTWH(x, y, squareSize, squareSize),
+            whitePaint,
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
