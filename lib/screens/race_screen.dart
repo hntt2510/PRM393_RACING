@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math';
 import 'package:flutter/material.dart';
 import '../models/game_state.dart';
@@ -23,6 +24,8 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
   late List<Horse> _racingHorses;
   int? _winnerId;
   bool _raceFinished = false;
+  int _countdown = 3;
+  Timer? _countdownTimer;
 
   @override
   void initState() {
@@ -51,18 +54,35 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
       return Tween<double>(begin: 0.0, end: 1.0).animate(
         CurvedAnimation(
           parent: controller,
-          curve: Curves
-              .easeOutCubic, // Smooth acceleration curve cho chuyển động tự nhiên
+          curve: Curves.easeOutCubic, // Smooth acceleration
         ),
       );
     }).toList();
 
-    // Start race
-    _startRace();
-    _soundService.playRaceSound();
+    // Start Countdown
+    _startCountdown();
+  }
+
+  void _startCountdown() {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        setState(() {
+          if (_countdown > 1) {
+            _countdown--;
+            // Optional: Play countdown beep
+          } else {
+            _countdown = 0;
+            timer.cancel();
+            _startRace();
+          }
+        });
+      }
+    });
   }
 
   void _startRace() {
+    _soundService.playRaceSound();
+
     // Start all animations with slight delay variations
     final random = Random();
     for (int i = 0; i < _controllers.length; i++) {
@@ -93,7 +113,7 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
 
   void _finishRace() {
     _soundService.stop();
-    Future.delayed(const Duration(seconds: 1), () {
+    Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
         final updatedState = widget.gameState.copyWith(winnerId: _winnerId);
         if (updatedState.hasWon) {
@@ -114,6 +134,7 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     for (var controller in _controllers) {
       controller.dispose();
     }
@@ -146,8 +167,7 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
                     children: [
                       ...List.generate(_racingHorses.length, (index) {
                         final horse = _racingHorses[index];
-                        final topPosition =
-                            laneHeight * (index + 0.25); // Start a bit lower
+                        final topPosition = laneHeight * (index + 0.25);
 
                         return Positioned(
                           top: topPosition,
@@ -155,95 +175,59 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
                           right: 0,
                           height: laneHeight,
                           child: Container(
+                            margin: const EdgeInsets.symmetric(vertical: 4),
                             decoration: BoxDecoration(
-                              gradient: LinearGradient(
-                                begin: Alignment.topCenter,
-                                end: Alignment.bottomCenter,
-                                colors: [
-                                  Colors.brown.shade500,
-                                  Colors.brown.shade400,
-                                  Colors.brown.shade300,
-                                  Colors.brown.shade400,
-                                  Colors.brown.shade500,
-                                ],
-                                stops: const [0.0, 0.2, 0.5, 0.8, 1.0],
+                              // Semi-transparent dark track for better contrast with background image
+                              color: Colors.black.withOpacity(0.4),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                                width: 1,
                               ),
-                              border: Border(
-                                top: BorderSide(
-                                  color: Colors.brown.shade900,
-                                  width: 2,
-                                ),
-                                bottom: BorderSide(
-                                  color: Colors.brown.shade900,
-                                  width: 2,
-                                ),
-                              ),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.3),
-                                  blurRadius: 4,
-                                  spreadRadius: 1,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
                             ),
                             child: Stack(
                               clipBehavior: Clip.none,
                               children: [
-                                // Track texture/lines
+                                // Track texture/lines - simpler white dashed lines
                                 ...List.generate(20, (lineIndex) {
                                   return Positioned(
                                     left: (screenWidth / 20) * lineIndex,
-                                    top: 4,
-                                    bottom: 4,
+                                    top: 10,
+                                    bottom: 10,
                                     child: Container(
                                       width: 2,
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.3),
+                                        color: Colors.white.withOpacity(0.15),
                                       ),
                                     ),
                                   );
                                 }),
-                                // Finish line
+
+                                // Enhanced Checkered Finish line
                                 Positioned(
-                                  right: 40,
+                                  right: 50,
                                   top: 0,
                                   bottom: 0,
                                   child: Container(
                                     width: 40,
                                     decoration: BoxDecoration(
-                                      gradient: LinearGradient(
-                                        colors: [Colors.white, Colors.black],
-                                        begin: Alignment.topCenter,
-                                        end: Alignment.bottomCenter,
-                                        tileMode: TileMode.repeated,
+                                      border: Border.symmetric(
+                                        horizontal: BorderSide(
+                                          color: Colors.white,
+                                          width: 2,
+                                        ),
                                       ),
                                     ),
-                                    child: const Center(
-                                      child: Text(
-                                        'FINISH',
-                                        style: TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 10,
-                                          letterSpacing: 2,
-                                          shadows: [
-                                            Shadow(
-                                              blurRadius: 2,
-                                              color: Colors.black,
-                                            ),
-                                          ],
-                                        ),
-                                        textAlign: TextAlign.center,
-                                        textDirection: TextDirection.ltr,
-                                      ),
+                                    child: CustomPaint(
+                                      painter: CheckeredPainter(),
                                     ),
                                   ),
                                 ),
+
                                 // Horse
                                 Positioned(
                                   left:
-                                      (screenWidth - 150) *
+                                      (screenWidth - 160) *
                                       horse.position.clamp(0.0, 1.0),
                                   top: 0,
                                   bottom: 0,
@@ -251,8 +235,9 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
                                     alignment: Alignment.centerLeft,
                                     child: HorseWidget(
                                       horse: horse,
-                                      size: laneHeight * 0.9, // Dynamic size
-                                      isRacing: !_raceFinished,
+                                      size: laneHeight * 0.9,
+                                      isRacing:
+                                          _countdown == 0 && !_raceFinished,
                                       isWinner:
                                           _raceFinished &&
                                           _winnerId == horse.id,
@@ -268,33 +253,79 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
                   );
                 },
               ),
-              // "GO!" Overlay
-              if (!_raceFinished)
-                Positioned(
-                  top: 16,
-                  left: 0,
-                  right: 0,
+
+              // Countdown Overlay with improved animation
+              if (_countdown > 0)
+                Container(
+                  color: Colors.black87, // Darker overlay for focus
                   child: Center(
-                    child: Text(
-                      'RACING!',
-                      style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        fontStyle: FontStyle.italic,
-                        color: Colors.yellowAccent,
-                        shadows: [
-                          Shadow(
-                            blurRadius: 10.0,
-                            color: Colors.black,
-                            offset: Offset(3.0, 3.0),
-                          ),
-                          Shadow(
-                            blurRadius: 20.0,
-                            color: Colors.red,
-                            offset: Offset(0, 0),
-                          ),
-                        ],
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 400),
+                      transitionBuilder:
+                          (Widget child, Animation<double> animation) {
+                            return ScaleTransition(
+                              scale: animation,
+                              child: FadeTransition(
+                                opacity: animation,
+                                child: child,
+                              ),
+                            );
+                          },
+                      child: Text(
+                        '$_countdown',
+                        key: ValueKey<int>(_countdown),
+                        style: const TextStyle(
+                          fontSize: 180,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.white,
+                          fontFamily: 'Roboto',
+                          shadows: [
+                            Shadow(
+                              blurRadius: 30,
+                              color: Colors.blueAccent,
+                              offset: Offset(0, 0),
+                            ),
+                          ],
+                        ),
                       ),
+                    ),
+                  ),
+                ),
+
+              // "GO!" Overlay
+              if (_countdown == 0 &&
+                  !_raceFinished &&
+                  _racingHorses[0].position < 0.05)
+                Positioned.fill(
+                  child: Center(
+                    child: TweenAnimationBuilder(
+                      tween: Tween<double>(begin: 0.0, end: 1.0),
+                      duration: const Duration(milliseconds: 600),
+                      curve: Curves.elasticOut,
+                      builder: (context, value, child) {
+                        return Transform.scale(
+                          scale: value * 1.5,
+                          child: Opacity(
+                            opacity: value.clamp(0.0, 1.0),
+                            child: const Text(
+                              'GO!',
+                              style: TextStyle(
+                                fontSize: 120,
+                                fontWeight: FontWeight.bold,
+                                fontStyle: FontStyle.italic,
+                                color: Colors.greenAccent,
+                                shadows: [
+                                  Shadow(
+                                    blurRadius: 20,
+                                    color: Colors.black,
+                                    offset: Offset(5, 5),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ),
                 ),
@@ -304,4 +335,33 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
       ),
     );
   }
+}
+
+// Re-added CheckeredPainter
+class CheckeredPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Paint blackPaint = Paint()..color = Colors.black;
+    final Paint whitePaint = Paint()..color = Colors.white;
+    const double squareSize = 10.0;
+
+    for (double y = 0; y < size.height; y += squareSize) {
+      for (double x = 0; x < size.width; x += squareSize) {
+        if (((x / squareSize).floor() + (y / squareSize).floor()) % 2 == 0) {
+          canvas.drawRect(
+            Rect.fromLTWH(x, y, squareSize, squareSize),
+            blackPaint,
+          );
+        } else {
+          canvas.drawRect(
+            Rect.fromLTWH(x, y, squareSize, squareSize),
+            whitePaint,
+          );
+        }
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
