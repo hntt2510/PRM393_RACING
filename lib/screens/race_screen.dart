@@ -28,40 +28,49 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
   Timer? _countdownTimer;
 
   @override
-  void initState() {
-    super.initState();
-    _racingHorses = widget.horses.map((h) => h.copyWith()).toList();
+void initState() {
+  super.initState();
+  _racingHorses = widget.horses.map((h) => h.copyWith()).toList();
 
-    // Initialize random speeds for each horse
-    final random = Random();
-    for (var horse in _racingHorses) {
-      horse.speed = 0.5 + random.nextDouble() * 1.0; // 0.5x to 1.5x speed
-    }
-
-    // Create animation controllers with speed-based duration
-    _controllers = List.generate(_racingHorses.length, (index) {
-      // Base duration divided by speed (faster horse = shorter duration)
-      final baseDuration = 4000; // 4 seconds base
-      final duration = (baseDuration / _racingHorses[index].speed).round();
-      return AnimationController(
-        vsync: this,
-        duration: Duration(milliseconds: duration),
-      );
-    });
-
-    // Create animations with smooth curves for natural movement
-    _animations = _controllers.map((controller) {
-      return Tween<double>(begin: 0.0, end: 1.0).animate(
-        CurvedAnimation(
-          parent: controller,
-          curve: Curves.easeOutCubic, // Smooth acceleration
-        ),
-      );
-    }).toList();
-
-    // Start Countdown
-    _startCountdown();
+  // Initialize random speeds for each horse
+  final random = Random();
+  for (var horse in _racingHorses) {
+    horse.speed = 0.5 + random.nextDouble() * 1.0;
   }
+
+  // Create animation controllers...
+  _controllers = List.generate(_racingHorses.length, (index) {
+    final baseDuration = 4000;
+    final duration = (baseDuration / _racingHorses[index].speed).round();
+    return AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: duration),
+    );
+  });
+
+  // Create animations...
+  _animations = _controllers.map((controller) {
+    return Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: controller,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }).toList();
+
+  _soundService.playRaceSound();
+
+  
+  // ✅ TIMEOUT: Dừng race sound sau 10 giây nếu chưa kết thúc
+  Future.delayed(const Duration(seconds: 10), () {
+    if (mounted && !_raceFinished) {
+      debugPrint('⏰ Race timeout - stopping sound');
+      _soundService.stop();
+    }
+  });
+  
+  _startCountdown();
+}
 
   void _startCountdown() {
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -69,7 +78,6 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
         setState(() {
           if (_countdown > 1) {
             _countdown--;
-            // Optional: Play countdown beep
           } else {
             _countdown = 0;
             timer.cancel();
@@ -81,7 +89,7 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
   }
 
   void _startRace() {
-    _soundService.playRaceSound();
+    // Nhạc race vẫn đang chạy từ lúc countdown, không cần phát lại
 
     // Start all animations with slight delay variations
     final random = Random();
@@ -112,25 +120,30 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
   }
 
   void _finishRace() {
-    _soundService.stop();
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        final updatedState = widget.gameState.copyWith(winnerId: _winnerId);
-        if (updatedState.hasWon) {
-          updatedState.addWin();
-        } else {
-          updatedState.addLoss();
-        }
-
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ResultScreen(gameState: updatedState),
-          ),
-        );
+  // Dừng chỉ race sound, không dừng toàn bộ
+  _soundService.stopRaceSound();
+  
+  // Tạo updatedState để kiểm tra thắng/thua
+  final updatedState = widget.gameState.copyWith(winnerId: _winnerId);
+  
+  // Chuyển sang màn hình kết quả sau 2 giây
+  Future.delayed(const Duration(seconds: 2), () {
+    if (mounted) {
+      if (updatedState.hasWon) {
+        updatedState.addWin();
+      } else {
+        updatedState.addLoss();
       }
-    });
-  }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ResultScreen(gameState: updatedState),
+        ),
+      );
+    }
+  });
+}
 
   @override
   void dispose() {

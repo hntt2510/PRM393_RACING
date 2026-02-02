@@ -40,12 +40,14 @@ class _ResultScreenState extends State<ResultScreen> {
     ];
     _winnerHorse = horses.firstWhere((h) => h.id == winnerId);
 
-    // Play appropriate sound
-    if (_hasWon) {
-      _soundService.playWinSound();
-    } else {
-      _soundService.playLoseSound();
-    }
+    // Stop race sound and play appropriate result sound after a small delay
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (_hasWon) {
+        _soundService.playWinSound();
+      } else {
+        _soundService.playLoseSound();
+      }
+    });
   }
 
   void _playAgain() {
