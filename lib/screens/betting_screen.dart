@@ -5,6 +5,7 @@ import '../models/horse.dart';
 import '../services/sound_service.dart';
 import '../widgets/horse_widget.dart';
 import 'race_screen.dart';
+import 'instruction_screen.dart';
 
 class BettingScreen extends StatefulWidget {
   final GameState gameState;
@@ -591,6 +592,34 @@ class _BettingScreenState extends State<BettingScreen> {
                 ),
               ],
             ),
+
+                // INSTRUCTION BUTTON - TOP LEFT CORNER
+                Positioned(
+                  top: 0,
+                  left: 16,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.help_outline,
+                        color: Colors.white,
+                        size: 32,
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const InstructionScreen(),
+                          ),
+                        );
+                      },
+                      tooltip: 'How to Play',
+                    ),
+                  ),
+                ),
                 // SOUND BUTTON - TOP RIGHT CORNER
                 Positioned(
                   top: 0,
