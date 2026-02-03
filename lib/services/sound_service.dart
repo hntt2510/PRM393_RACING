@@ -13,6 +13,13 @@ class SoundService {
 
   Future<void> playBettingSound() async {
     if (!_soundEnabled) return;
+    
+    // Check if betting sound is already playing
+    if (_currentSound == 'betting') {
+      debugPrint('ℹ️ Betting sound already playing, skip restart');
+      return;
+    }
+
     await _stopCurrentSound();
     try {
       await _player.play(AssetSource('sounds/betting.mp3'));
