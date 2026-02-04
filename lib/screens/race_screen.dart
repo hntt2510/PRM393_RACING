@@ -26,6 +26,7 @@ class _RaceScreenState extends State<RaceScreen> with TickerProviderStateMixin {
   bool _raceFinished = false;
   int _countdown = 3;
   Timer? _countdownTimer;
+  bool _soundStopped = false; // Track if sound has been stopped before finish
 
   @override
 void initState() {
@@ -94,10 +95,27 @@ void initState() {
     // Start all animations with slight delay variations
     final random = Random();
     for (int i = 0; i < _controllers.length; i++) {
+      final controller = _controllers[i];
+      final animation = _animations[i];
+      
       _controllers[i].addListener(() {
         if (mounted) {
+          // Check if we should stop sound 1 second before finish
+          if (!_soundStopped && !_raceFinished) {
+            final animationValue = animation.value;
+            final duration = controller.duration!.inMilliseconds;
+            final remainingTime = (1.0 - animationValue) * duration;
+            
+            // Stop sound when less than 1 second remaining
+            if (remainingTime <= 1000) {
+              _soundStopped = true;
+              _soundService.stopRaceSound();
+              debugPrint('🔇 Stopping race sound 1 second before finish');
+            }
+          }
+          
           setState(() {
-            _racingHorses[i].position = _animations[i].value;
+            _racingHorses[i].position = animation.value;
           });
         }
       });
