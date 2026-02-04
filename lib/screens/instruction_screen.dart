@@ -108,7 +108,7 @@ class _InstructionScreenState extends State<InstructionScreen> {
                          _buildRuleItem(
                           icon: Icons.emoji_events,
                           title: 'Win or Lose',
-                          description: 'If your horse finishes first, you win x5 your bet amount. Good luck!',
+                          description: 'If your horse finishes first, you win x2 your bet amount. Good luck!',
                           color: Colors.red,
                         ),
                       ],
