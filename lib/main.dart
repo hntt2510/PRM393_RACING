@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'models/game_state.dart';
-import 'screens/betting_screen.dart';
+import 'screens/login_screen.dart';
 
 import 'package:flutter/services.dart';
 
@@ -28,7 +28,7 @@ class MyApp extends StatelessWidget {
         ),
         useMaterial3: true,
       ),
-      home: BettingScreen(gameState: GameState(balance: 1000.0)),
+      home: const LoginScreen(),
     );
   }
 }
